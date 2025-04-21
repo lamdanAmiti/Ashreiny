@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opus File Finder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background-color: #e9ecef;
+            border: 1px solid #dee2e6;
+            color: #495057;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Opus File Finder</h1>
+        <div class="input-group">
+            <input type="text" id="websiteUrl" placeholder="Enter website URL (e.g., https://example.com)">
+            <button id="findOpus">Find Opus</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const findOpusButton = document.getElementById('findOpus');
+        const websiteUrlInput = document.getElementById('websiteUrl');
+        const resultDiv = document.getElementById('result');
+
+        findOpusButton.addEventListener('click', async () => {
+            const url = websiteUrlInput.value.trim();
+            
+            if (!url) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please enter a URL';
+                return;
+            }
+
+            // Basic URL validation
+            try {
+                new URL(url);
+            } catch (e) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please enter a valid URL';
+                return;
+            }
+
+            // Show loading state
+            findOpusButton.disabled = true;
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = 'Searching for Opus files...';
+
+            try {
+                const response = await fetch(`/find-opus?url=${encodeURIComponent(url)}`);
+                const data = await response.json();
+
+                if (data.success && data.opusUrl) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>Found Opus file:</strong><br>
+                        <a href="${data.opusUrl}" target="_blank">${data.opusUrl}</a>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = data.message || 'No Opus files found on this website';
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Error: ' + error.message;
+            } finally {
+                findOpusButton.disabled = false;
+            }
+        });
+
+        // Allow pressing Enter to trigger search
+        websiteUrlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                findOpusButton.click();
+            }
+        });
+    </script>
+</body>
+</html>
